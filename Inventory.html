@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fitbox - WMS</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="icon" href="images/Logo.webp" type="image/x-icon">
   <style>
     body {
@@ -16,35 +17,93 @@
     .btn-main {
       background: linear-gradient(to right, #3b82f6, #60a5fa);
       color: #fff;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
     }
     .btn-main:hover {
       transform: translateY(-3px);
       box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      background-color: #1e40af; /* Slightly darker on hover */
+    }
+    .btn-reset {
+      background: #f87171;
+      color: #fff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    .btn-reset:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 15px rgba(239, 68, 68, 0.5);
+      background-color: #ef4444; /* Darker red */
     }
     .card {
       border-radius: 12px;
       background: #ffffff;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
     }
     .card:hover {
       transform: scale(1.03);
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
     }
-    .text-gradient {
-      background: linear-gradient(to right, #3b82f6, #60a5fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #ccc;
+      margin-bottom: 2rem;
     }
-    .btn-reset {
-      background: #f87171;
-      color: #fff;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    .tab-item {
+      padding: 1rem 2rem;
+      cursor: pointer;
+      text-align: center;
+      transition: background-color 0.3s ease;
     }
-    .btn-reset:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 15px rgba(239, 68, 68, 0.5);
+    .tab-item:hover {
+      background-color: #f3f4f6;
+      border-radius: 8px 8px 0 0;
+    }
+    .tab-item.active {
+      background-color: #3b82f6;
+      color: white;
+      border-radius: 8px 8px 0 0;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-header h4 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+    .card-header .status {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      background-color: #60a5fa;
+      color: white;
+      font-size: 0.875rem;
+    }
+    .card-header .btn-edit {
+      background-color: #f59e0b;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .card-header .btn-edit:hover {
+      background-color: #d97706;
+    }
+    .card-header .btn-delete {
+      background-color: #ef4444;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .card-header .btn-delete:hover {
+      background-color: #dc2626;
     }
   </style>
 </head>
@@ -58,7 +117,6 @@
         <a href="index.html" class="mx-4 hover:text-blue-200">Home</a>
         <a href="calculator.html" class="mx-4 hover:text-blue-200">คำนวณขนาดกล่อง</a>
         <a href="Inventory.html" class="mx-4 hover:text-blue-200">WMS</a>
-        
       </div>
     </div>
   </nav>
@@ -67,136 +125,178 @@
   <section class="py-12 bg-gray-50" id="wms">
     <div class="container mx-auto">
       <h3 class="text-4xl font-semibold text-gray-700 mb-6 text-center">จัดการคลังสินค้า</h3>
-      <form id="wms-form" class="card bg-white p-8 shadow-md rounded-md max-w-lg mx-auto">
-        <div class="mb-4">
-          <label class="block text-gray-600 text-sm font-semibold mb-2">รหัสสินค้า</label>
-          <input type="text" id="productCode" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="เช่น P001" required>
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-600 text-sm font-semibold mb-2">ชื่อสินค้า</label>
-          <input type="text" id="productName" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="ชื่อสินค้า" required>
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-600 text-sm font-semibold mb-2">สถานที่จัดเก็บ</label>
-          <input type="text" id="storageLocation" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="เช่น ชั้น 1, ตู้ 5" required>
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-600 text-sm font-semibold mb-2">ขนาดสินค้า (ยาว x กว้าง x สูง) ซม.</label>
-          <input type="text" id="itemSize" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="เช่น 12,12,6" required>
-        </div>
-        <div class="mb-4">
-          <label class="block text-gray-600 text-sm font-semibold mb-2">จำนวนสินค้า</label>
-          <input type="number" id="itemCount" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="กรอกจำนวนสินค้า" required>
-        </div>
-        <button type="submit" class="btn-main w-full py-3 rounded-md font-semibold shadow-lg">บันทึกข้อมูลการจัดเก็บ</button>
-        <button type="button" id="reset-button" class="btn-reset w-full py-3 mt-4 rounded-md font-semibold shadow-lg">รีเซ็ต</button>
-      </form>
 
-      <div id="wms-result" class="mt-6 text-gray-700 text-center"></div>
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab-item active" id="manage-tab">จัดการคลังสินค้า</div>
+        <div class="tab-item" id="warehouse-tab">ข้อมูลคลังสินค้า</div>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="manage-content">
+        <form id="wms-form" class="card bg-white p-8 shadow-md rounded-md max-w-lg mx-auto">
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">รหัสสินค้า</label>
+            <input type="text" id="productCode" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="เช่น P001" required>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">ชื่อสินค้า</label>
+            <input type="text" id="productName" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="ชื่อสินค้า" required>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">หมวดหมู่สินค้า</label>
+            <input type="text" id="productCategory" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="เช่น อาหาร, อุปกรณ์กีฬา" required>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">สถานที่จัดเก็บ</label>
+            <input type="text" id="storageLocation" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="เช่น ชั้น 1, ตู้ 5" required>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">ขนาดสินค้า (ยาว x กว้าง x สูง) ซม.</label>
+            <input type="text" id="itemSize" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="เช่น 12,12,6" required>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-600 text-sm font-semibold mb-2">จำนวนสินค้า</label>
+            <input type="number" id="itemCount" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="จำนวนสินค้า" required>
+          </div>
+          <button type="submit" class="btn-main w-full py-2 rounded-md">บันทึก</button>
+          <button type="button" id="reset-button" class="btn-reset w-full py-2 mt-2 rounded-md">รีเซ็ต</button>
+        </form>
+      </div>
+
+      <!-- Warehouse Content -->
+      <div id="warehouse-content" class="hidden">
+        <div id="warehouse-data">
+          <!-- รายการสินค้า -->
+        </div>
+      </div>
     </div>
   </section>
-
-  <!-- Warehouse Data -->
-  <section class="py-12 bg-gray-50" id="warehouse">
-    <div class="container mx-auto">
-      <h3 class="text-4xl font-semibold text-gray-700 mb-6 text-center">ข้อมูลคลังสินค้า</h3>
-      <div id="warehouse-data" class="space-y-4"></div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="bg-main-gradient text-white py-8">
-    <div class="container mx-auto text-center">
-      <p>&copy; 2024 Fitbox. All Rights Reserved.</p>
-    </div>
-  </footer>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const wmsForm = document.getElementById('wms-form');
-      const resetButton = document.getElementById('reset-button');
-      const wmsResultDiv = document.getElementById('wms-result');
-      const warehouseDataDiv = document.getElementById('warehouse-data');
-
-      // Load warehouse data from LocalStorage
-      const loadWarehouseData = () => {
-        const data = JSON.parse(localStorage.getItem('warehouseData')) || [];
-        warehouseDataDiv.innerHTML = '';
-        data.forEach((item, index) => {
-          const itemDiv = document.createElement('div');
-          itemDiv.classList.add('card', 'p-4');
-          itemDiv.innerHTML = `
-            <p><strong>รหัสสินค้า:</strong> ${item.productCode}</p>
-            <p><strong>ชื่อสินค้า:</strong> ${item.productName}</p>
-            <p><strong>สถานที่จัดเก็บ:</strong> ${item.storageLocation}</p>
-            <p><strong>ขนาดสินค้า:</strong> ${item.itemSize}</p>
-            <p><strong>จำนวนสินค้า:</strong> ${item.itemCount}</p>
-            <button class="btn-reset mt-4 w-full" onclick="editItem(${index})">แก้ไข</button>
-            <button class="btn-reset mt-2 w-full" onclick="deleteItem(${index})">ลบ</button>
-          `;
-          warehouseDataDiv.appendChild(itemDiv);
-        });
-      };
-
-      // Save warehouse data to LocalStorage
-      const saveWarehouseData = () => {
-        const data = JSON.parse(localStorage.getItem('warehouseData')) || [];
-        const productCode = document.getElementById('productCode').value.trim();
-        const productName = document.getElementById('productName').value.trim();
-        const storageLocation = document.getElementById('storageLocation').value.trim();
-        const itemSizeInput = document.getElementById('itemSize').value.trim();
-        const itemCount = parseInt(document.getElementById('itemCount').value.trim());
-
-        const newItem = {
-          productCode,
-          productName,
-          storageLocation,
-          itemSize: itemSizeInput,
-          itemCount
-        };
-
-        data.push(newItem);
-        localStorage.setItem('warehouseData', JSON.stringify(data));
-        loadWarehouseData();
-        wmsForm.reset();
-      };
-
-      // Edit warehouse item
-      window.editItem = (index) => {
-        const data = JSON.parse(localStorage.getItem('warehouseData')) || [];
-        const item = data[index];
-
-        document.getElementById('productCode').value = item.productCode;
-        document.getElementById('productName').value = item.productName;
-        document.getElementById('storageLocation').value = item.storageLocation;
-        document.getElementById('itemSize').value = item.itemSize;
-        document.getElementById('itemCount').value = item.itemCount;
-
-        data.splice(index, 1);  // Remove the item being edited
-        localStorage.setItem('warehouseData', JSON.stringify(data));
-        loadWarehouseData();
-      };
-
-      // Delete warehouse item
-      window.deleteItem = (index) => {
-        const data = JSON.parse(localStorage.getItem('warehouseData')) || [];
-        data.splice(index, 1); // Remove the item
-        localStorage.setItem('warehouseData', JSON.stringify(data));
-        loadWarehouseData();
-      };
-
-      wmsForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        saveWarehouseData();
+    const wmsForm = document.getElementById('wms-form');
+    const resetButton = document.getElementById('reset-button');
+    const warehouseData = document.getElementById('warehouse-data');
+    const warehouseTab = document.getElementById('warehouse-tab');
+    const manageTab = document.getElementById('manage-tab');
+    const manageContent = document.getElementById('manage-content');
+    const warehouseContent = document.getElementById('warehouse-content');
+  
+    let warehouse = JSON.parse(localStorage.getItem('warehouse')) || [];
+    let editingIndex = null; // Track the index of the product being edited
+  
+    // Function to render warehouse data
+    const renderWarehouse = () => {
+      warehouseData.innerHTML = '';
+      warehouse.forEach((product, index) => {
+        const card = document.createElement('div');
+        card.className = 'card flex justify-between items-center';
+        card.innerHTML = `
+          <div>
+            <h4 class="text-lg font-semibold">${product.productName}</h4>
+            <p class="text-sm text-gray-600">${product.productCode}</p>
+            <p class="text-sm text-gray-600">${product.productCategory}</p>
+            <p class="text-sm text-gray-600">จำนวน: ${product.itemCount}</p>
+            <p class="text-sm text-gray-600">ขนาด: ${product.itemSize}</p>
+          </div>
+          <div class="card-header">
+            <button class="btn-edit" onclick="editProduct(${index})">แก้ไข</button>
+            <button class="btn-delete" onclick="deleteProduct(${index})">ลบ</button>
+          </div>
+        `;
+        warehouseData.appendChild(card);
       });
-
-      resetButton.addEventListener('click', () => {
-        wmsForm.reset();
-        wmsResultDiv.innerHTML = '';
-      });
-
-      loadWarehouseData(); // Load data when page loads
+    };
+  
+    // Switch tab functions
+    manageTab.addEventListener('click', () => {
+      manageTab.classList.add('active');
+      warehouseTab.classList.remove('active');
+      manageContent.classList.remove('hidden');
+      warehouseContent.classList.add('hidden');
     });
+  
+    warehouseTab.addEventListener('click', () => {
+      warehouseTab.classList.add('active');
+      manageTab.classList.remove('active');
+      manageContent.classList.add('hidden');
+      warehouseContent.classList.remove('hidden');
+      renderWarehouse();
+    });
+  
+    // Form submission (Add or Edit)
+    wmsForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+  
+      // Retrieve form values
+      const newProduct = {
+        productCode: document.getElementById('productCode').value,
+        productName: document.getElementById('productName').value,
+        productCategory: document.getElementById('productCategory').value,
+        storageLocation: document.getElementById('storageLocation').value,
+        itemSize: document.getElementById('itemSize').value,
+        itemCount: parseInt(document.getElementById('itemCount').value),
+      };
+  
+      // If editing, update the product at the editing index
+      if (editingIndex !== null) {
+        warehouse[editingIndex] = newProduct;
+        alert('ข้อมูลสินค้าได้รับการแก้ไข');
+      } else {
+        // Add a new product if not editing
+        warehouse.push(newProduct);
+        alert('ข้อมูลถูกบันทึกเรียบร้อย');
+      }
+  
+      // Save updated warehouse to localStorage
+      localStorage.setItem('warehouse', JSON.stringify(warehouse));
+  
+      // Reset form and switch back to warehouse tab
+      wmsForm.reset();
+      warehouseTab.click();
+      editingIndex = null; // Reset the editing index
+    });
+  
+    // Reset form
+    resetButton.addEventListener('click', () => {
+      wmsForm.reset();
+      editingIndex = null; // Reset the editing index if the form is reset
+    });
+  
+    // Edit product function
+    const editProduct = (index) => {
+      const product = warehouse[index];
+  
+      // Fill the form with the product data
+      document.getElementById('productCode').value = product.productCode;
+      document.getElementById('productName').value = product.productName;
+      document.getElementById('productCategory').value = product.productCategory;
+      document.getElementById('storageLocation').value = product.storageLocation;
+      document.getElementById('itemSize').value = product.itemSize;
+      document.getElementById('itemCount').value = product.itemCount;
+  
+      // Store the index of the product being edited
+      editingIndex = index;
+  
+      // Switch to the manage tab for editing
+      manageTab.classList.add('active');
+      warehouseTab.classList.remove('active');
+      manageContent.classList.remove('hidden');
+      warehouseContent.classList.add('hidden');
+    };
+  
+    // Delete product function
+    const deleteProduct = (index) => {
+      if (confirm("คุณต้องการลบสินค้านี้ใช่หรือไม่?")) {
+        warehouse.splice(index, 1);
+        localStorage.setItem('warehouse', JSON.stringify(warehouse));
+        renderWarehouse();
+      }
+    };
+  
+    // Initialize warehouse tab
+    warehouseTab.click();
   </script>
+  
 </body>
 </html>
